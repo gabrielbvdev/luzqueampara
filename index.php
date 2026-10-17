@@ -610,20 +610,6 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       </div>
     </section>
 
-    <section class="moment on-dark" id="momento" aria-label="Sua luz">
-      <div class="wrap">
-        <p class="wait" id="wait">Quando você acender, sua janela se ilumina no velário, logo abaixo.</p>
-        <div class="moment-content" id="done" hidden>
-          <h2 id="result-title" tabindex="-1">Sua luz está acesa.</h2>
-          <p class="lead">Obrigado por deixar o cuidado permanecer.</p>
-          <div class="actions">
-            <a class="btn" href="#velario">Ver o velário</a>
-            <a class="btn btn-line" href="#cartao">Compartilhar meu cartão</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="velario on-dark" id="velario" aria-labelledby="h-vel">
       <div class="wrap">
         <div class="v-head">
@@ -664,46 +650,17 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
         <div class="card-view"><canvas id="certificate" width="1080" height="1350" role="img" aria-label="Prévia do Certificado de Amparo digital"></canvas></div>
       </div>
     </section>
-
-    <section class="doe on-dark" id="doe" aria-labelledby="h-doe">
-      <div class="wrap doe-grid">
-        <div>
-          <h2 id="h-doe">Onde sua luz <strong>chega</strong></h2>
-          <p class="lead">A Casa Solange Fraga fica no bairro da Saúde. É um lar para crianças do interior em tratamento contra o câncer e o coração, e para quem as acompanha.</p>
-          <div class="actions"><button class="btn btn-line" type="button" disabled>Doação digital: em breve</button></div>
-          <p class="soft">Você também pode doar alimentos não perecíveis. Os pontos de coleta do Campo Santo serão confirmados pela equipe.</p>
-        </div>
-        <ul class="facts">
-          <li><strong>Hospedagem</strong>Um lugar para ficar durante o tratamento.</li>
-          <li><strong>Comida e transporte</strong>Gratuitos para as famílias.</li>
-          <li><strong>Oficinas de renda</strong>Para as mães. Aqui, a esperança tem endereço.</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="hoje on-dark" id="hoje" aria-labelledby="h-hoje">
-      <div class="wrap">
-        <h2 id="h-hoje">No Campo Santo <strong>hoje</strong></h2>
-        <dl>
-          <div class="it"><dt>Missas</dt><dd>Horários a confirmar</dd></div>
-          <div class="it"><dt>Água e acolhimento</dt><dd>Local a confirmar</dd></div>
-          <div class="it"><dt>Mapa do cemitério</dt><dd>Mapa será disponibilizado pela equipe</dd></div>
-          <div class="it"><dt>Plantão</dt><dd>Contato a confirmar</dd></div>
-          <div class="it"><dt>QR do jazigo</dt><dd>Orientações a confirmar</dd></div>
-        </dl>
-      </div>
-    </section>
   </main>
   <footer class="foot on-dark">
     <div class="wrap">
       <p class="tagline">Luz que Ampara · O cuidado que permanece</p>
-      <p>Campo Santo Familiar · Santa Casa · Casa Solange Fraga</p>
+      <p>Campo Santo Familiar · Santa Casa da Bahia · Casa Solange Fraga</p>
       <p>#LuzQueAmpara</p>
       <details>
         <summary>Privacidade</summary>
         <p>Os nomes e a mensagem aparecem no mural apenas com sua autorização, por inteiro ou só com as iniciais. Sem autorização, a luz é contada sem exibir nomes ou mensagem. Não inclua dados de menores de idade, informações de saúde ou contatos na homenagem.</p>
       </details>
-      <div class="tools"><button class="mini" id="reduce-toggle" type="button" aria-pressed="false">Reduzir animações</button><a class="mini" id="openTelao" href="#telao">Ver telão</a></div>
+      <div class="tools"><button class="mini" id="reduce-toggle" type="button" aria-pressed="false" style="display: none;">Reduzir animações</button><a class="mini" id="openTelao" href="#telao" style="display: none;">Ver telão</a></div>
     </div>
   </footer>
   <div id="telao" hidden role="dialog" aria-modal="true" aria-label="Telão do evento">
