@@ -6,6 +6,8 @@ Projeto independente em uma página autocontida:
 - `lqa_tributes.sql`: cria a tabela única usada pela página.
 - `lqa_tributes_migration.sql`: migra o esquema inicial da versão PHP para a tabela e os campos atuais, preservando os registros.
 - `homenagens_velario_migration.sql`: migra uma instalação que já usa os campos em português na tabela `lqa_tributes`.
+- `homenagens_velario_contacts_migration.sql`: adiciona e-mail e telefone a uma instalação que já usa a tabela `homenagens_velario`.
+- Os scripts de migração preservam os registros antigos, deixando seus novos campos de contato sem valor.
 
 ## Requisitos
 
@@ -16,7 +18,7 @@ Projeto independente em uma página autocontida:
 
 ## Instalação
 
-1. Crie um banco de dados MySQL e importe `lqa_tributes.sql`. Se já existir uma tabela de uma versão anterior desta implementação PHP, faça um backup e execute uma única vez o script de migração correspondente ao esquema instalado: `lqa_tributes_migration.sql` para a tabela original com colunas em inglês, ou `homenagens_velario_migration.sql` para a tabela `lqa_tributes` com colunas em português.
+1. Crie um banco de dados MySQL e importe `lqa_tributes.sql`. Se já existir uma tabela de uma versão anterior desta implementação PHP, faça um backup e execute uma única vez o script de migração correspondente ao esquema instalado: `lqa_tributes_migration.sql` para a tabela original com colunas em inglês; `homenagens_velario_migration.sql` para a tabela `lqa_tributes` com colunas em português; ou `homenagens_velario_contacts_migration.sql` para a tabela final `homenagens_velario`.
 2. Configure as credenciais do usuário MySQL nas variáveis de ambiente do PHP. O banco padrão é `luz_que_ampara`; o usuário precisa ter permissão de `SELECT` e `INSERT` na tabela `homenagens_velario`.
 
    - `DB_HOST` (opcional; padrão `127.0.0.1`)
@@ -45,6 +47,6 @@ Acesse `http://127.0.0.1:8000/`.
 
 ## Dados e privacidade
 
-Todos os registros de velas ficam em `homenagens_velario`. A tabela usa colunas em português, um `id` sequencial `AUTO_INCREMENT` como chave primária e um `uuid` único para identificar as requisições e os registros públicos. A coluna `forma_exibicao` usa os valores `oculto`, `completo` e `iniciais`. A tabela armazena os dados originais da homenagem e, quando houver consentimento, uma projeção pública em nome completo ou iniciais. O mural consulta apenas essa projeção e não recebe os nomes originais de homenagens privadas.
+Todos os registros de velas ficam em `homenagens_velario`. A tabela usa colunas em português, um `id` sequencial `AUTO_INCREMENT` como chave primária e um `uuid` único para identificar as requisições e os registros públicos. A coluna `forma_exibicao` usa os valores `oculto`, `completo` e `iniciais`. A tabela armazena os dados originais da homenagem e os contatos informados; quando houver consentimento, também armazena uma projeção pública em nome completo ou iniciais. O mural consulta apenas essa projeção e não recebe os nomes originais nem os contatos.
 
 Esta versão é independente da aplicação React na raiz do repositório. Não migra nem altera automaticamente os registros da tabela `tributes` existente. O layout de `index.php` acompanha a ordem, textos, paleta, ilustração das casas, varal de homenagens e animações do velário original.

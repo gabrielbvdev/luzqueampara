@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS homenagens_velario (
   uuid CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   nome_homenageado VARCHAR(80) NOT NULL,
   nome_usuario VARCHAR(60) NULL,
+  email VARCHAR(254) NULL,
+  telefone VARCHAR(30) NULL,
   nome_homenageado_publico VARCHAR(80) NULL,
   nome_usuario_publico VARCHAR(60) NULL,
   mensagem VARCHAR(140) NOT NULL DEFAULT '',

@@ -159,6 +159,8 @@ function createTribute(): never
     $id = is_string($input['id'] ?? null) ? $input['id'] : '';
     $name = normalizedText(is_string($input['name'] ?? null) ? $input['name'] : '');
     $author = normalizedText(is_string($input['authorName'] ?? null) ? $input['authorName'] : '');
+    $email = normalizedText(is_string($input['email'] ?? null) ? $input['email'] : '');
+    $phone = normalizedText(is_string($input['phone'] ?? null) ? $input['phone'] : '');
     $message = normalizedText(is_string($input['message'] ?? null) ? $input['message'] : '');
     $consent = ($input['consent'] ?? false) === true;
     $mode = $input['displayMode'] ?? 'hidden';
@@ -166,8 +168,11 @@ function createTribute(): never
     if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $id)) {
         jsonResponse(422, ['error' => 'Identificador da homenagem inválido. Atualize a página e tente novamente.']);
     }
-    if ($name === '' || textLength($name) > 80 || textLength($author) > 60 || textLength($message) > 140) {
-        jsonResponse(422, ['error' => 'Confira os campos: nome obrigatório, até 80 caracteres; autor até 60; mensagem até 140.']);
+    if ($name === '' || textLength($name) > 80 || $author === '' || textLength($author) > 60
+        || $email === '' || textLength($email) > 254 || filter_var($email, FILTER_VALIDATE_EMAIL) === false
+        || !preg_match('/^\(\d{2}\) (?:\d{4}|\d{5})-\d{4}$/D', $phone)
+        || textLength($message) > 140) {
+        jsonResponse(422, ['error' => 'Confira os campos: nome de quem você lembra e seu nome são obrigatórios (até 80 e 60 caracteres); informe um e-mail válido e um telefone brasileiro com DDD; mensagem até 140 caracteres.']);
     }
     if (!in_array($mode, ['hidden', 'full', 'initials'], true)
         || ($consent && $mode === 'hidden')
@@ -206,13 +211,15 @@ function createTribute(): never
             ? ($mode === 'initials' ? tributeInitials($author) : $author)
             : null;
         $insert = $pdo->prepare(
-            'INSERT INTO homenagens_velario (uuid, nome_homenageado, nome_usuario, nome_homenageado_publico, nome_usuario_publico, mensagem, forma_exibicao, consentimento, versao_consentimento, data_consentimento)
-             VALUES (:uuid, :nome_homenageado, :nome_usuario, :nome_homenageado_publico, :nome_usuario_publico, :mensagem, :forma_exibicao, :consentimento, :versao_consentimento, :data_consentimento)'
+            'INSERT INTO homenagens_velario (uuid, nome_homenageado, nome_usuario, email, telefone, nome_homenageado_publico, nome_usuario_publico, mensagem, forma_exibicao, consentimento, versao_consentimento, data_consentimento)
+             VALUES (:uuid, :nome_homenageado, :nome_usuario, :email, :telefone, :nome_homenageado_publico, :nome_usuario_publico, :mensagem, :forma_exibicao, :consentimento, :versao_consentimento, :data_consentimento)'
         );
         $insert->execute([
             'uuid' => $id,
             'nome_homenageado' => $name,
             'nome_usuario' => $author !== '' ? $author : null,
+            'email' => $email,
+            'telefone' => $phone,
             'nome_homenageado_publico' => $publicName,
             'nome_usuario_publico' => $publicAuthor,
             'mensagem' => $message,
@@ -424,7 +431,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     @media(min-width:880px){.form-grid{grid-template-columns:.8fr 1.2fr;gap:72px}}
     h2{font-weight:300;font-size:clamp(2rem,4.6vw,3.3rem);line-height:1.08}h2 strong{font-weight:800}
     form{display:grid;gap:20px}.field label{display:block;margin-bottom:7px;font-weight:600}
-    input[type=text],textarea{width:100%;min-height:52px;padding:13px 15px;border:1.5px solid rgba(24,45,38,.5);border-radius:10px;background:#EEF0EB;color:var(--green)}
+    input[type=text],input[type=email],input[type=tel],textarea{width:100%;min-height:52px;padding:13px 15px;border:1.5px solid rgba(24,45,38,.5);border-radius:10px;background:#EEF0EB;color:var(--green)}
     textarea{min-height:110px;resize:vertical}input:focus,textarea:focus{outline:3px solid var(--green);outline-offset:2px}
     .hint,.privacy{color:var(--muted);font-size:.92rem}.counter-row{display:flex;justify-content:space-between;gap:12px}
     .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.check input{width:22px;height:22px;margin:3px 0 0;accent-color:var(--green);flex:none}
@@ -451,7 +458,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     .form-sec{padding:clamp(56px,8vw,104px) 0;border-top:1px solid rgba(24,45,38,.16)}
     .form-grid .lead{margin-top:18px}
     .field label{font-weight:500;font-size:1rem;margin-bottom:8px}
-    .field input[type=text],.field textarea{font:400 1.05rem/1.4 Inter,system-ui,sans-serif;min-height:54px}
+    .field input[type=text],.field input[type=email],.field input[type=tel],.field textarea{font:400 1.05rem/1.4 Inter,system-ui,sans-serif;min-height:54px}
     .field textarea{min-height:112px}
     .field .hint{margin-top:6px}
     .moment{min-height:380px;display:flex;flex-direction:column;justify-content:flex-end;padding:70px 0 64px;background:var(--green);color:var(--cream)}
@@ -587,8 +594,16 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
             <p class="hint field-error" id="name-error" hidden></p>
           </div>
           <div class="field">
-            <label for="author-name">Seu nome (opcional)</label>
-            <input id="author-name" name="authorName" type="text" maxlength="60" autocomplete="given-name">
+            <label for="author-name">Seu nome</label>
+            <input id="author-name" name="authorName" type="text" maxlength="60" autocomplete="given-name" required>
+          </div>
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" maxlength="254" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="phone">Telefone</label>
+            <input id="phone" name="phone" type="tel" maxlength="15" autocomplete="tel" value="719" required>
           </div>
           <div class="field">
             <label for="message">Mensagem (opcional)</label>
@@ -605,7 +620,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           </div>
           <div class="honeypot" aria-hidden="true"><label for="website">Deixe este campo vazio</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
           <button class="btn" id="submit-button" type="submit">Acender</button>
-          <p class="privacy">Não inclua dados de menores de idade, informações de saúde ou contatos na homenagem.</p>
+          <p class="privacy">Seu e-mail e telefone não serão exibidos no mural. Não inclua dados de menores de idade ou informações de saúde na homenagem.</p>
         </form>
       </div>
     </section>
@@ -678,6 +693,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       const consent = document.getElementById("consent");
       const options = document.getElementById("display-options");
       const message = document.getElementById("message");
+      const phoneInput = document.getElementById("phone");
       const canvas = document.getElementById("certificate");
       const context = canvas.getContext("2d");
       const savedKey = "lqa-last-tribute";
@@ -704,6 +720,35 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
         const normalized = fold(value);
         return blocked.some(word => new RegExp("(^|[^a-z])" + word + "([^a-z]|$)", "u").test(normalized));
       }
+      function formatBrazilianPhone(value) {
+        const digits = value.replace(/\D/g, "").slice(0, 11);
+        if (!digits) return "";
+        if (digits.length <= 2) return "(" + digits;
+        const areaCode = digits.slice(0, 2);
+        const subscriber = digits.slice(2);
+        const subscriberPrefixLength = digits[2] === "9" || digits.length > 10 ? 5 : 4;
+        let formatted = "(" + areaCode + ") " + subscriber.slice(0, subscriberPrefixLength);
+        if (subscriber.length > subscriberPrefixLength) {
+          formatted += "-" + subscriber.slice(subscriberPrefixLength, 9);
+        }
+        return formatted;
+      }
+      function phoneCaretPosition(value, digitCount) {
+        if (digitCount === 0) return 0;
+        let seen = 0;
+        for (let index = 0; index < value.length; index++) {
+          if (/\d/.test(value[index]) && ++seen === digitCount) return index + 1;
+        }
+        return value.length;
+      }
+      function maskPhone() {
+        const cursor = phoneInput.selectionStart ?? phoneInput.value.length;
+        const digitsBeforeCursor = phoneInput.value.slice(0, cursor).replace(/\D/g, "").length;
+        phoneInput.value = formatBrazilianPhone(phoneInput.value);
+        const nextCursor = phoneCaretPosition(phoneInput.value, digitsBeforeCursor);
+        phoneInput.setSelectionRange(nextCursor, nextCursor);
+      }
+      phoneInput.value = formatBrazilianPhone(phoneInput.value);
       function setCount(value) {
         const formatted = Number.isFinite(value) ? value.toLocaleString("pt-BR") : "—";
         const label = value === 1 ? "luz acesa" : "luzes acesas";
@@ -1010,6 +1055,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       }, {once:true});
 
       consent.addEventListener("change", () => { options.hidden = !consent.checked; });
+      phoneInput.addEventListener("input", maskPhone);
       message.addEventListener("input", () => {
         document.getElementById("message-count").textContent = message.value.length + "/140";
       });
@@ -1100,11 +1146,17 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
         formMessage.textContent = "";
         const name = form.elements.name.value.trim();
         const authorName = form.elements.authorName.value.trim();
+        const email = form.elements.email.value.trim();
+        const phone = form.elements.phone.value.trim();
+        const phoneDigits = phone.replace(/\D/g, "");
         const text = form.elements.message.value.trim();
         const nameError = document.getElementById("name-error");
         nameError.hidden = true;
         const violations = [];
         if (!name) { violations.push("Informe o nome de quem você lembra."); nameError.textContent = "Escreva o nome de quem você lembra."; nameError.hidden = false; }
+        if (!authorName) violations.push("Informe seu nome.");
+        if (!email || !form.elements.email.validity.valid) violations.push("Informe um e-mail válido.");
+        if (!/^\(\d{2}\) (?:\d{4}|\d{5})-\d{4}$/.test(phone) || ![10, 11].includes(phoneDigits.length)) violations.push("Informe um telefone brasileiro válido com DDD.");
         if (name && hasProfanity(name)) violations.push("Revise o nome de quem você lembra.");
         if (authorName && hasProfanity(authorName)) violations.push("Revise seu nome.");
         if (text && hasProfanity(text)) violations.push("Revise a mensagem.");
@@ -1116,6 +1168,8 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
             id: crypto.randomUUID(),
             name,
             authorName,
+            email,
+            phone,
             message: text,
             consent: consent.checked,
             displayMode: consent.checked ? form.elements.displayMode.value : "hidden",
@@ -1133,7 +1187,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           const localTribute = {id:data.id,name,createdAt:data.createdAt};
           try { localStorage.setItem(savedKey, JSON.stringify(localTribute)); } catch { /* O cartão continua disponível nesta sessão. */ }
           showSaved(localTribute);
-          form.reset(); options.hidden = true; document.getElementById("message-count").textContent = "0/140";
+          form.reset(); phoneInput.value = formatBrazilianPhone(phoneInput.value); options.hidden = true; document.getElementById("message-count").textContent = "0/140";
           refreshMural({merge:true});
         } catch (error) {
           formMessage.textContent = error instanceof Error ? error.message : "Não foi possível registrar sua luz. Tente novamente.";
