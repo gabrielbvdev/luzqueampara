@@ -11,7 +11,7 @@ function jsonResponse(int $status, array $payload): never
     exit;
 }
 
-function productionDatabaseSettings(): array
+function databaseSettingsFromFile(): array
 {
     $settings = [];
     $path = __DIR__ . DIRECTORY_SEPARATOR . '.env';
@@ -30,8 +30,11 @@ function productionDatabaseSettings(): array
                 throw new RuntimeException('Database configuration error: invalid line in .env.');
             }
             $key = trim(substr($line, 0, $separator));
-            if (!in_array($key, ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'], true)) {
-                throw new RuntimeException('Database configuration error: .env may contain only DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD.');
+            if (!in_array($key, [
+                'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
+                'DB_LOCAL_HOST', 'DB_LOCAL_PORT', 'DB_LOCAL_NAME', 'DB_LOCAL_USER', 'DB_LOCAL_PASSWORD',
+            ], true)) {
+                throw new RuntimeException('Database configuration error: .env may contain only database settings.');
             }
             $value = trim(substr($line, $separator + 1));
             if (strlen($value) >= 2
@@ -64,26 +67,18 @@ function db(): PDO
         $environment = $isLoopbackClient && $isLocalHost ? 'local' : 'production';
     }
 
-    if ($environment === 'local') {
-        $settings = [
-            'host' => getenv('DB_LOCAL_HOST') ?: '127.0.0.1',
-            'port' => getenv('DB_LOCAL_PORT') ?: '3306',
-            'name' => getenv('DB_LOCAL_NAME') ?: 'luz_que_ampara',
-            'user' => getenv('DB_LOCAL_USER') ?: 'root',
-            'password' => getenv('DB_LOCAL_PASSWORD'),
-        ];
-        $prefix = 'DB_LOCAL_';
-    } else {
-        $fileSettings = productionDatabaseSettings();
-        $settings = [];
-        foreach (['HOST' => 'host', 'PORT' => 'port', 'NAME' => 'name', 'USER' => 'user', 'PASSWORD' => 'password'] as $suffix => $key) {
-            $value = getenv('DB_' . $suffix);
-            $settings[$key] = $value !== false ? $value : ($fileSettings['DB_' . $suffix] ?? '');
-        }
-        if ($settings['port'] === '') {
-            $settings['port'] = '3306';
-        }
-        $prefix = 'DB_';
+    $fileSettings = databaseSettingsFromFile();
+    $prefix = $environment === 'local' ? 'DB_LOCAL_' : 'DB_';
+    $settings = [];
+    foreach (['HOST' => 'host', 'PORT' => 'port', 'NAME' => 'name', 'USER' => 'user', 'PASSWORD' => 'password'] as $suffix => $key) {
+        $value = getenv($prefix . $suffix);
+        $settings[$key] = $value !== false ? $value : ($fileSettings[$prefix . $suffix] ?? '');
+    }
+    if ($settings['host'] === '' && $environment === 'local') {
+        $settings['host'] = '127.0.0.1';
+    }
+    if ($settings['port'] === '') {
+        $settings['port'] = '3306';
     }
     foreach (['host' => 'HOST', 'name' => 'NAME', 'user' => 'USER'] as $key => $suffix) {
         if ($settings[$key] === '') {
