@@ -404,14 +404,10 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     :focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:5px}
     .wrap{width:min(100%,1160px);margin:auto;padding-inline:var(--pad)}
     .top{padding:calc(16px + env(safe-area-inset-top,0px)) 0 14px;color:var(--muted);font-size:.95rem}
-    .top-logos{display:flex;align-items:center;gap:14px;min-height:76px}
-    .top-logos a{display:block;border-radius:4px;cursor:pointer;animation:logo-click-hint 3.2s ease-in-out infinite;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
-    .top-logos a:hover,.top-logos a:focus-visible{animation:none;transform:translateY(-2px) scale(1.04)}
-    .top-logos a:active{transform:scale(.97)}
-    @keyframes logo-click-hint{0%,75%,100%{transform:scale(1)}85%{transform:scale(1.05)}}
-    .top-logos img{display:block;width:auto;max-width:100%;height:auto;object-fit:contain}
-    .top-logos .logo-campo-santo{max-width:160px;max-height:76px}
-    .top-logos .logo-santa-casa{max-width:76px;max-height:76px}
+    .top-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px .25em;min-height:76px}
+    .top-links a,.top-links .separator{color:var(--green);font-size:clamp(1.05rem,2.4vw,1.35rem);font-weight:800}
+    .top-links a{text-decoration:none;transition:color .2s ease}
+    .top-links a:hover{text-decoration:underline;text-underline-offset:4px}
     .hero{padding:clamp(35px,7vw,86px) 0 clamp(56px,9vw,112px)}
     .hero-grid{display:grid;grid-template-columns:1fr;align-items:center;gap:36px}
     @media(min-width:880px){.hero-grid{grid-template-columns:1.15fr .85fr;gap:64px}}
@@ -568,14 +564,9 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
 </head>
 <body>
   <header class="top on-light">
-    <div class="wrap top-logos">
-      <a href="https://camposantofamiliar.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Visitar o site do Campo Santo Familiar">
-        <img class="logo-campo-santo" src="assets/img/csf.png" alt="Campo Santo Familiar">
-      </a>
-      <a href="https://www.santacasaba.org.br/impacto-social/casa-de-apoio-solange-fraga/index.html" target="_blank" rel="noopener noreferrer" aria-label="Visitar a Casa de Apoio Solange Fraga">
-        <img class="logo-santa-casa" src="assets/img/solangefraga.png" alt="Santa Casa da Bahia — Casa de Apoio Solange Fraga">
-      </a>
-    </div>
+    <h2 class="wrap top-links">
+      <a href="https://camposantofamiliar.com.br/" target="_blank" rel="noopener noreferrer">Campo Santo Familiar</a><span class="separator" aria-hidden="true">&amp;</span><a href="https://www.santacasaba.org.br/impacto-social/casa-de-apoio-solange-fraga/index.html" target="_blank" rel="noopener noreferrer">Casa de Apoio Solange Fraga</a>
+    </h2>
   </header>
   <main>
     <section class="hero on-light">
@@ -628,7 +619,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
             <div class="counter-row hint"><span>Até 140 caracteres.</span><span id="message-count">0/140</span></div>
           </div>
           <div class="field">
-            <label class="check" for="consent"><input id="consent" name="consent" type="checkbox"><span>Autorizo exibir os nomes e a mensagem no mural.</span></label>
+            <label class="check" for="consent"><input id="consent" name="consent" type="checkbox"><span> Autorizo exibir os nomes e a mensagem no mural.</span></label>
             <div class="radios" id="display-options" role="radiogroup" aria-label="Como exibir os nomes" hidden>
               <label><input type="radio" name="displayMode" value="full" checked>Nome completo</label>
               <label><input type="radio" name="displayMode" value="initials">Só as iniciais</label>
