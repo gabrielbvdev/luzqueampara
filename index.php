@@ -403,7 +403,15 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     a{color:inherit}button,input,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}
     :focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:5px}
     .wrap{width:min(100%,1160px);margin:auto;padding-inline:var(--pad)}
-    .top{padding:calc(20px + env(safe-area-inset-top,0px)) 0 0;color:var(--muted);font-size:.95rem}
+    .top{padding:calc(16px + env(safe-area-inset-top,0px)) 0 14px;color:var(--muted);font-size:.95rem}
+    .top-logos{display:flex;align-items:center;gap:14px;min-height:76px}
+    .top-logos a{display:block;border-radius:4px;cursor:pointer;animation:logo-click-hint 3.2s ease-in-out infinite;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+    .top-logos a:hover,.top-logos a:focus-visible{animation:none;transform:translateY(-2px) scale(1.04)}
+    .top-logos a:active{transform:scale(.97)}
+    @keyframes logo-click-hint{0%,75%,100%{transform:scale(1)}85%{transform:scale(1.05)}}
+    .top-logos img{display:block;width:auto;max-width:100%;height:auto;object-fit:contain}
+    .top-logos .logo-campo-santo{max-width:160px;max-height:76px}
+    .top-logos .logo-santa-casa{max-width:76px;max-height:76px}
     .hero{padding:clamp(35px,7vw,86px) 0 clamp(56px,9vw,112px)}
     .hero-grid{display:grid;grid-template-columns:1fr;align-items:center;gap:36px}
     @media(min-width:880px){.hero-grid{grid-template-columns:1.15fr .85fr;gap:64px}}
@@ -559,7 +567,16 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
   </style>
 </head>
 <body>
-  <header class="top on-light"><div class="wrap"><p>Campo Santo Familiar &amp; Santa Casa da Bahia</p></div></header>
+  <header class="top on-light">
+    <div class="wrap top-logos">
+      <a href="https://camposantofamiliar.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Visitar o site do Campo Santo Familiar">
+        <img class="logo-campo-santo" src="assets/img/csf.png" alt="Campo Santo Familiar">
+      </a>
+      <a href="https://www.santacasaba.org.br/impacto-social/casa-de-apoio-solange-fraga/index.html" target="_blank" rel="noopener noreferrer" aria-label="Visitar a Casa de Apoio Solange Fraga">
+        <img class="logo-santa-casa" src="assets/img/solangefraga.png" alt="Santa Casa da Bahia — Casa de Apoio Solange Fraga">
+      </a>
+    </div>
+  </header>
   <main>
     <section class="hero on-light">
       <div class="wrap hero-grid">
