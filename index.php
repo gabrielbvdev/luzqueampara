@@ -11,24 +11,93 @@ function jsonResponse(int $status, array $payload): never
     exit;
 }
 
+function productionDatabaseSettings(): array
+{
+    $settings = [];
+    $path = __DIR__ . DIRECTORY_SEPARATOR . '.env';
+    if (is_file($path)) {
+        $lines = file($path, FILE_IGNORE_NEW_LINES);
+        if ($lines === false) {
+            throw new RuntimeException('Database configuration error: .env could not be read.');
+        }
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
+            $separator = strpos($line, '=');
+            if ($separator === false) {
+                throw new RuntimeException('Database configuration error: invalid line in .env.');
+            }
+            $key = trim(substr($line, 0, $separator));
+            if (!in_array($key, ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'], true)) {
+                throw new RuntimeException('Database configuration error: .env may contain only DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD.');
+            }
+            $value = trim(substr($line, $separator + 1));
+            if (strlen($value) >= 2
+                && (($value[0] === '"' && $value[-1] === '"') || ($value[0] === "'" && $value[-1] === "'"))) {
+                $value = substr($value, 1, -1);
+            }
+            $settings[$key] = $value;
+        }
+    }
+    return $settings;
+}
+
 function db(): PDO
 {
-    $host = getenv('DB_HOST') ?: '127.0.0.1';
-    $port = getenv('DB_PORT') ?: '3306';
-    $name = getenv('DB_NAME') ?: 'luz_que_ampara';
-    $user = getenv('DB_USER') ?: 'root';
-    $password = getenv('DB_PASSWORD') ?: '123mudar';
-    if ($name === '') {
-        throw new RuntimeException('DB_NAME is not configured');
+    $environment = getenv('APP_ENV');
+    if ($environment !== false && $environment !== '') {
+        if (!in_array($environment, ['local', 'production'], true)) {
+            throw new RuntimeException('Database configuration error: APP_ENV must be local or production.');
+        }
+    } else {
+        $requestHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+        $host = is_string($requestHost) ? parse_url('http://' . $requestHost, PHP_URL_HOST) : false;
+        $remoteAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+        $packedAddress = is_string($remoteAddress) ? @inet_pton($remoteAddress) : false;
+        $isLoopbackClient = $packedAddress !== false
+            && ((strlen($packedAddress) === 4 && ord($packedAddress[0]) === 127)
+                || $packedAddress === inet_pton('::1'));
+        $isLocalHost = is_string($host)
+            && in_array(trim(strtolower($host), '[]'), ['localhost', '127.0.0.1', '::1'], true);
+        $environment = $isLoopbackClient && $isLocalHost ? 'local' : 'production';
     }
-    if ($user === '') {
-        throw new RuntimeException('DB_USER is not configured');
+
+    if ($environment === 'local') {
+        $settings = [
+            'host' => getenv('DB_LOCAL_HOST') ?: '127.0.0.1',
+            'port' => getenv('DB_LOCAL_PORT') ?: '3306',
+            'name' => getenv('DB_LOCAL_NAME') ?: 'luz_que_ampara',
+            'user' => getenv('DB_LOCAL_USER') ?: 'root',
+            'password' => getenv('DB_LOCAL_PASSWORD'),
+        ];
+        $prefix = 'DB_LOCAL_';
+    } else {
+        $fileSettings = productionDatabaseSettings();
+        $settings = [];
+        foreach (['HOST' => 'host', 'PORT' => 'port', 'NAME' => 'name', 'USER' => 'user', 'PASSWORD' => 'password'] as $suffix => $key) {
+            $value = getenv('DB_' . $suffix);
+            $settings[$key] = $value !== false ? $value : ($fileSettings['DB_' . $suffix] ?? '');
+        }
+        if ($settings['port'] === '') {
+            $settings['port'] = '3306';
+        }
+        $prefix = 'DB_';
+    }
+    foreach (['host' => 'HOST', 'name' => 'NAME', 'user' => 'USER'] as $key => $suffix) {
+        if ($settings[$key] === '') {
+            throw new RuntimeException("Database configuration error: {$prefix}{$suffix} is not configured.");
+        }
+    }
+    if ($environment === 'production' && $settings['password'] === '') {
+        throw new RuntimeException("Database configuration error: {$prefix}PASSWORD is not configured.");
     }
 
     $pdo = new PDO(
-        "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
-        $user,
-        $password,
+        "mysql:host={$settings['host']};port={$settings['port']};dbname={$settings['name']};charset=utf8mb4",
+        $settings['user'],
+        $settings['password'] === false ? '' : $settings['password'],
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -261,9 +330,8 @@ function createTribute(): never
         error_log("[Luz que Ampara] Tribute database write failed (SQLSTATE {$sqlState}; driver code {$driverCode}).");
         jsonResponse(503, ['error' => 'Não foi possível registrar sua luz agora. Tente novamente em instantes.']);
     } catch (Throwable $error) {
-        if ($error->getMessage() === 'DB_USER is not configured'
-            || $error->getMessage() === 'DB_NAME is not configured') {
-            error_log('[Luz que Ampara] Database configuration is incomplete: ' . $error->getMessage() . '.');
+        if (str_starts_with($error->getMessage(), 'Database configuration error:')) {
+            error_log('[Luz que Ampara] Database configuration is incomplete: ' . $error->getMessage());
         } else {
             error_log('[Luz que Ampara] Tribute request failed (' . get_class($error) . ').');
         }
