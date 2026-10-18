@@ -441,8 +441,16 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     .check{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.check input{width:22px;height:22px;margin:3px 0 0;accent-color:var(--green);flex:none}
     .radios{display:flex;flex-wrap:wrap;gap:10px 22px;margin:12px 0 0 34px}.radios label{display:flex;align-items:center;gap:8px;cursor:pointer}.radios input{accent-color:var(--green)}
     .radios[hidden], [hidden]{display:none!important}
-    .summary{padding:13px 15px;border:1px solid #8A2B1F;border-radius:10px;background:#F2E6E2;color:#6E2017}
-    .summary:empty{display:none}.honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+    .honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+    .error-dialog{width:min(calc(100% - 40px),520px);padding:0;border:1px solid rgba(24,45,38,.2);border-radius:16px;background:var(--cream);color:var(--green);box-shadow:0 24px 80px #0005;opacity:0;transform:translateY(12px) scale(.98);transition:opacity .25s ease,transform .25s ease,overlay .25s allow-discrete,display .25s allow-discrete}
+    .error-dialog[open]{opacity:1;transform:translateY(0) scale(1)}
+    @starting-style{.error-dialog[open]{opacity:0;transform:translateY(12px) scale(.98)}}
+    .error-dialog::backdrop{background:rgba(7,39,35,.58);backdrop-filter:blur(3px);transition:background-color .25s ease,backdrop-filter .25s ease}
+    .error-dialog-content{padding:clamp(24px,6vw,36px)}
+    .error-dialog h2{font-size:clamp(1.6rem,5vw,2rem);font-weight:800}
+    .error-dialog p{margin-top:14px;white-space:pre-line}
+    .error-dialog button{margin-top:24px}
+    @starting-style{.error-dialog[open]::backdrop{background:rgba(7,39,35,0);backdrop-filter:blur(0)}}
     .privacy{margin:0 0 0 34px}.result{padding:64px 0;background:var(--deep);color:var(--cream)}
     .result-inner{display:grid;gap:28px;grid-template-columns:1fr;align-items:center}
     @media(min-width:850px){.result-inner{grid-template-columns:1fr minmax(260px,420px);gap:64px}}
@@ -595,11 +603,9 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           <p class="lead">Leva menos de um minuto. Você escolhe como sua homenagem aparece.</p>
         </div>
         <form id="tribute-form" novalidate>
-          <div class="summary" id="form-message" role="alert" aria-live="assertive"></div>
           <div class="field">
             <label for="remembered-name">Nome de quem você lembra</label>
             <input id="remembered-name" name="name" type="text" maxlength="80" autocomplete="off" required>
-            <p class="hint field-error" id="name-error" hidden></p>
           </div>
           <div class="field">
             <label for="author-name">Seu nome</label>
@@ -637,7 +643,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       <div class="wrap">
         <div class="v-head">
           <div>
-            <h2 id="h-vel">O velário</h2>
+            <h2 id="h-vel" tabindex="-1">O velário</h2>
             <p class="lead">Cada janela que acende é alguém lembrado. A casa cresce até virar um bairro, as três casas de amparo.</p>
           </div>
           <p class="counter" role="status" aria-live="polite"><strong class="counter-number" id="mural-count">—</strong><span id="mural-count-label">luzes acesas</span></p>
@@ -662,7 +668,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     <section class="cartao on-dark" id="cartao" aria-labelledby="h-cartao">
       <div class="wrap cartao-grid">
         <div>
-          <h2 id="h-cartao">Seu cartão de <strong>amparo</strong></h2>
+          <h2 id="h-cartao" tabindex="-1">Seu cartão de <strong>amparo</strong></h2>
           <p class="lead">Um cartão para guardar e compartilhar, com o nome de quem você lembrou. Ele registra a homenagem, não comprova uma doação.</p>
           <div class="actions">
             <button class="btn btn-main" id="share-button" type="button" disabled>Compartilhar</button>
@@ -691,13 +697,22 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     <div class="t-mid"><svg class="casa" id="casa-telao" viewBox="0 0 900 430" role="img" aria-label="Casa de luzes"></svg></div>
     <div class="t-bot"><div class="t-name" id="screen-name" aria-live="polite"></div><button class="mini" id="closeTelao" type="button">Sair do telão</button></div>
   </div>
+  <dialog class="error-dialog" id="error-dialog" aria-labelledby="error-dialog-title" aria-describedby="error-dialog-message">
+    <div class="error-dialog-content">
+      <h2 id="error-dialog-title">Não foi possível concluir</h2>
+      <p id="error-dialog-message" role="alert"></p>
+      <button class="btn" id="error-dialog-close" type="button" autofocus>Entendi</button>
+    </div>
+  </dialog>
 
   <script>
     (() => {
       "use strict";
       const csrf = document.querySelector('meta[name="csrf-token"]').content;
       const form = document.getElementById("tribute-form");
-      const formMessage = document.getElementById("form-message");
+      const errorDialog = document.getElementById("error-dialog");
+      const errorDialogTitle = document.getElementById("error-dialog-title");
+      const errorDialogMessage = document.getElementById("error-dialog-message");
       const consent = document.getElementById("consent");
       const options = document.getElementById("display-options");
       const message = document.getElementById("message");
@@ -720,6 +735,12 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       setReducedMotion(reduceActive);
       reduceToggle.addEventListener("click", () => setReducedMotion(!reduceActive));
       reducedMotion.addEventListener?.("change", event => setReducedMotion(event.matches));
+      function showError(text, title = "Não foi possível concluir") {
+        errorDialogTitle.textContent = title;
+        errorDialogMessage.textContent = text;
+        if (!errorDialog.open) errorDialog.showModal();
+      }
+      document.getElementById("error-dialog-close").addEventListener("click", () => errorDialog.close());
 
       function fold(value) {
         return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
@@ -1125,25 +1146,26 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
         context.font = "400 24px system-ui,sans-serif"; context.fillText("Campo Santo Familiar · Santa Casa da Bahia · Casa Solange Fraga", 540, 1215);
         context.fillText("Salvador, " + new Date(tribute.createdAt).toLocaleDateString("pt-BR"), 540, 1262);
       }
-      function showSaved(tribute, moveToResult = true) {
+      function showSaved(tribute, destination = null) {
         savedTribute = tribute;
         drawCertificate(tribute);
         document.getElementById("share-button").disabled = false;
         document.getElementById("download-button").disabled = false;
         document.getElementById("card-note").textContent = "Pronto. Compartilhe ou guarde a imagem.";
-        if (moveToResult) {
-          document.getElementById("wait").hidden = true;
-          document.getElementById("done").hidden = false;
-          document.getElementById("result-title").focus({preventScroll:true});
-          document.getElementById("momento").scrollIntoView({behavior: reduceActive ? "auto" : "smooth", block:"center"});
+        if (destination) {
+          const section = document.getElementById(destination);
+          const heading = section?.querySelector("h2");
+          if (!section || !heading) {
+            throw new Error("A homenagem foi salva, mas não foi possível localizar a seção de destino.");
+          }
+          heading.focus({preventScroll:true});
+          section.scrollIntoView({behavior:reduceActive ? "auto" : "smooth", block:"start"});
         }
       }
       try {
         const cached = JSON.parse(localStorage.getItem(savedKey) || "null");
         if (cached && typeof cached.name === "string" && typeof cached.createdAt === "string") {
-          showSaved(cached, false);
-          document.getElementById("wait").hidden = true;
-          document.getElementById("done").hidden = false;
+          showSaved(cached);
         }
       } catch { /* Armazenamento local pode estar indisponível. */ }
       if (!savedTribute) drawCertificate({name:"Nome de quem você lembra",createdAt:new Date().toISOString()});
@@ -1151,24 +1173,21 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
 
       form.addEventListener("submit", async event => {
         event.preventDefault();
-        formMessage.textContent = "";
         const name = form.elements.name.value.trim();
         const authorName = form.elements.authorName.value.trim();
         const email = form.elements.email.value.trim();
         const phone = form.elements.phone.value.trim();
         const phoneDigits = phone.replace(/\D/g, "");
         const text = form.elements.message.value.trim();
-        const nameError = document.getElementById("name-error");
-        nameError.hidden = true;
         const violations = [];
-        if (!name) { violations.push("Informe o nome de quem você lembra."); nameError.textContent = "Escreva o nome de quem você lembra."; nameError.hidden = false; }
+        if (!name) violations.push("Informe o nome de quem você lembra.");
         if (!authorName) violations.push("Informe seu nome.");
         if (!email || !form.elements.email.validity.valid) violations.push("Informe um e-mail válido.");
         if (!/^\(\d{2}\) (?:\d{4}|\d{5})-\d{4}$/.test(phone) || ![10, 11].includes(phoneDigits.length)) violations.push("Informe um telefone brasileiro válido com DDD.");
         if (name && hasProfanity(name)) violations.push("Revise o nome de quem você lembra.");
         if (authorName && hasProfanity(authorName)) violations.push("Revise seu nome.");
         if (text && hasProfanity(text)) violations.push("Revise a mensagem.");
-        if (violations.length) { formMessage.textContent = violations.join(" "); return; }
+        if (violations.length) { showError(violations.join("\n"), "Confira os dados do formulário"); return; }
         const button = document.getElementById("submit-button");
         button.disabled = true; button.textContent = "Acendendo…";
         try {
@@ -1194,11 +1213,11 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           if (!response.ok) throw new Error(data.error || "Não foi possível registrar sua luz.");
           const localTribute = {id:data.id,name,createdAt:data.createdAt};
           try { localStorage.setItem(savedKey, JSON.stringify(localTribute)); } catch { /* O cartão continua disponível nesta sessão. */ }
-          showSaved(localTribute);
+          showSaved(localTribute, consent.checked ? "velario" : "cartao");
           form.reset(); phoneInput.value = formatBrazilianPhone(phoneInput.value); options.hidden = true; document.getElementById("message-count").textContent = "0/140";
           refreshMural({merge:true});
         } catch (error) {
-          formMessage.textContent = error instanceof Error ? error.message : "Não foi possível registrar sua luz. Tente novamente.";
+          showError(error instanceof Error ? error.message : "Não foi possível registrar sua luz. Tente novamente.");
         } finally {
           button.disabled = false; button.textContent = "Acender";
         }
@@ -1211,7 +1230,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           const blob = await blobFromCanvas(), url = URL.createObjectURL(blob), anchor = document.createElement("a");
           anchor.href = url; anchor.download = "luz-que-ampara.png"; anchor.click();
           setTimeout(() => URL.revokeObjectURL(url), 30000);
-        } catch (error) { formMessage.textContent = error.message; }
+        } catch (error) { showError(error instanceof Error ? error.message : "Não foi possível baixar o cartão."); }
       });
       document.getElementById("share-button").addEventListener("click", async () => {
         try {
@@ -1222,7 +1241,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           else if (navigator.share) await navigator.share({title:payload.title,text:payload.text});
           else document.getElementById("download-button").click();
         } catch (error) {
-          if (error?.name !== "AbortError") formMessage.textContent = error.message || "Não foi possível compartilhar o cartão.";
+          if (error?.name !== "AbortError") showError(error instanceof Error ? error.message : "Não foi possível compartilhar o cartão.");
         }
       });
     })();
