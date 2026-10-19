@@ -14,7 +14,10 @@ function jsonResponse(int $status, array $payload): never
 function databaseSettingsFromFile(): array
 {
     $settings = [];
-    $path = __DIR__ . DIRECTORY_SEPARATOR . '.env';
+    $path = is_file(dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env')
+    ? dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env'
+    : __DIR__ . DIRECTORY_SEPARATOR . '.env';
+    
     if (is_file($path)) {
         $lines = file($path, FILE_IGNORE_NEW_LINES);
         if ($lines === false) {
