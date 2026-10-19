@@ -466,6 +466,8 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     *,*::before,*::after{box-sizing:border-box}
     html{scroll-behavior:smooth;background:var(--cream);-webkit-text-size-adjust:100%}
     body{margin:0;color:var(--green);background:var(--cream);font:17px/1.6 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+    @keyframes page-fade-in{from{opacity:0}to{opacity:1}}
+    @media(prefers-reduced-motion:no-preference){body{animation:page-fade-in .45s ease-out both}}
     a{color:inherit}button,input,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}
     :focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:5px}
     .wrap{width:min(100%,1160px);margin:auto;padding-inline:var(--pad)}
