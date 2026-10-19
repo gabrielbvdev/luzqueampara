@@ -934,6 +934,12 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       let telaoTimer = 0;
       let telaoIndex = 0;
       let telaoCurrentId = null;
+      function actionUrl(action) {
+        const url = new URL(window.location.href);
+        url.hash = "";
+        url.searchParams.set("action", action);
+        return url;
+      }
       function muralUrl(cursor = null) {
         const params = new URLSearchParams({action:"list",limit:"60"});
         if (query) params.set("q", query);
@@ -941,7 +947,29 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           params.set("before", cursor.before);
           params.set("id", cursor.id);
         }
-        return "index.php?" + params.toString();
+        const url = actionUrl("list");
+        url.search = params.toString();
+        return url.href;
+      }
+      async function readApiResponse(response, fallback) {
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+          if (response.status === 404) {
+            throw new Error("O servidor não encontrou o endpoint da página (HTTP 404). Confira o caminho de publicação e tente novamente.");
+          }
+          throw new Error(`O servidor retornou uma resposta inesperada (HTTP ${response.status}). Confira o caminho de publicação e tente novamente.`);
+        }
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("O servidor retornou uma resposta inválida. Tente novamente em instantes.");
+        }
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+          throw new Error("O servidor retornou uma resposta inválida. Tente novamente em instantes.");
+        }
+        if (!response.ok) throw new Error(data.error || fallback);
+        return data;
       }
       function flameIcon() {
         const icon = svgElement("svg",{viewBox:"0 0 24 34","aria-hidden":"true",focusable:"false"});
@@ -1073,9 +1101,7 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
       });
       async function fetchMuralPage(cursor) {
         const response = await fetch(muralUrl(cursor), {cache:"no-store",headers:{Accept:"application/json"}});
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Não foi possível atualizar o mural.");
-        return data;
+        return readApiResponse(response, "Não foi possível atualizar o mural.");
       }
       async function refreshMural({append=false, merge=false}={}) {
         if (muralBusy || document.hidden) return;
@@ -1270,15 +1296,14 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
             displayMode: consent.checked ? form.elements.displayMode.value : "hidden",
             website: form.elements.website.value
           };
-          const response = await fetch("index.php?action=create", {
+          const response = await fetch(actionUrl("create"), {
             method:"POST",
             credentials:"same-origin",
             cache:"no-store",
             headers:{"Content-Type":"application/json","Accept":"application/json","X-CSRF-Token":csrf},
             body:JSON.stringify(tribute)
           });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error || "Não foi possível registrar sua luz.");
+          const data = await readApiResponse(response, "Não foi possível registrar sua luz.");
           const localTribute = {id:data.id,name,createdAt:data.createdAt};
           try { localStorage.setItem(savedKey, JSON.stringify(localTribute)); } catch { /* O cartão continua disponível nesta sessão. */ }
           showSaved(localTribute, consent.checked ? "velario" : "cartao");
