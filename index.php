@@ -611,6 +611,23 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
     .hoje .it{padding:18px 0;border-top:1px solid rgba(228,230,225,.2)}
     .hoje dt{font-family:"Alegreya Sans","Trebuchet MS",sans-serif;font-weight:700;font-size:1.3rem}
     .hoje dd{margin:2px 0 0;color:rgba(228,230,225,.76)}
+    .apoio{padding:clamp(64px,9vw,112px) 0;background:var(--cream);border-top:1px solid rgba(24,45,38,.14)}
+    .apoio-heading{max-width:720px;margin:0 auto;text-align:center}
+    .apoio-heading .eyebrow{color:var(--gold);font-size:.88rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    .apoio-heading h2{margin-top:8px}
+    .apoio-heading .lead{margin:18px auto 0}
+    .apoio-groups{display:grid;grid-template-columns:1fr;gap:18px;margin-top:42px}
+    @media(min-width:760px){.apoio-groups{grid-template-columns:1fr 1fr;gap:24px}}
+    .apoio-group{min-height:220px;padding:clamp(24px,4vw,36px);border:1px solid rgba(24,45,38,.16);border-radius:18px;background:#EEF0EB}
+    .apoio-group h3{font-family:"Alegreya Sans","Trebuchet MS",sans-serif;font-size:1.55rem;line-height:1.2}
+    .apoio-names{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 0;padding:0;list-style:none}
+    .apoio-names li{padding:8px 14px;border:1px solid rgba(24,45,38,.18);border-radius:999px;background:var(--cream);font-weight:600}
+    .apoio-logos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:12px;margin-top:22px}
+    .apoio-logo{display:flex;min-width:0;min-height:132px;margin:0;padding:12px;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1px solid rgba(24,45,38,.14);border-radius:12px;background:var(--cream)}
+    .apoio-logo img{display:block;width:100%;max-width:150px;height:56px;object-fit:contain;object-position:center}
+    .apoio-logo figcaption{width:100%;max-width:24ch;min-height:2.8em;color:var(--muted);font-size:.82rem;line-height:1.4;text-align:center;overflow-wrap:anywhere}
+    @media(max-width:520px){.apoio-logos{gap:8px}.apoio-logo{padding:8px}.apoio-logo figcaption{font-size:.72rem}}
+    .apoio-visual-note{margin:24px auto 0;color:var(--muted);font-size:.9rem;text-align:center}
     .foot{padding:48px 0 calc(40px + env(safe-area-inset-bottom,0px));background:var(--deep);border-top:1px solid rgba(228,230,225,.12);color:var(--cream)}
     .foot .wrap{display:grid;gap:18px}.foot p{color:rgba(228,230,225,.76);font-size:.98rem}
     .foot .tagline{font-family:"Alegreya Sans","Trebuchet MS",sans-serif;font-weight:700;font-size:1.4rem;color:var(--cream)}
@@ -745,6 +762,44 @@ $csrfToken = htmlspecialchars($_SESSION['csrf'], ENT_QUOTES | ENT_SUBSTITUTE, 'U
           <p class="soft" id="card-note">Seu cartão aparece aqui depois que você acender uma luz.</p>
         </div>
         <div class="card-view"><canvas id="certificate" width="1080" height="1350" role="img" aria-label="Prévia do Certificado de Amparo digital"></canvas></div>
+      </div>
+    </section>
+    <section class="apoio on-light" id="apoiadores" aria-labelledby="h-apoio">
+      <div class="wrap">
+        <div class="apoio-heading">
+          <p class="eyebrow">Gratidão que transforma</p>
+          <h2 id="h-apoio">Quem apoia <strong>esse propósito</strong></h2>
+          <p class="lead">Cada gesto de generosidade ajuda a levar cuidado e acolhimento a quem precisa.</p>
+          <p class="apoio-visual-note">Exemplo visual: os nomes são fictícios e as logos são apenas ilustrativas; não representam doações ou apoios confirmados.</p>
+        </div>
+        <div class="apoio-groups">
+          <section class="apoio-group" aria-labelledby="h-apoio-pessoas">
+            <h3 id="h-apoio-pessoas">Pessoas</h3>
+            <ul class="apoio-names" aria-label="Nomes fictícios para exemplo">
+              <li>Ana Clara Ribeiro</li>
+              <li>Marcos Vinícius Souza</li>
+              <li>Beatriz Oliveira</li>
+              <li>Família Santos</li>
+            </ul>
+          </section>
+          <section class="apoio-group" aria-labelledby="h-apoio-empresas">
+            <h3 id="h-apoio-empresas">Empresas</h3>
+            <div class="apoio-logos" aria-label="Empresas apoiadoras">
+              <figure class="apoio-logo">
+                <img src="assets/img/doadores/csf.png" loading="lazy">
+                <figcaption>Campo Santo Familiar</figcaption>
+              </figure>
+              <figure class="apoio-logo">
+                <img src="assets/img/doadores/solangefraga.png" loading="lazy">
+                <figcaption>Casa de Apoio Solange Fraga</figcaption>
+              </figure>
+              <figure class="apoio-logo">
+                <img src="assets/img/doadores/protecn.png" loading="lazy">
+                <figcaption>Protecn</figcaption>
+              </figure>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
   </main>
